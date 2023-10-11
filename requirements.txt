@@ -5,3 +5,6 @@ itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
 Werkzeug==1.0.1
+mysql-connector-python==8.1.0
+regex==2023.6.3
+requests==2.31.0

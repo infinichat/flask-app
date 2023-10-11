@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShiBot Widget</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        /* The following styles are for the chatbot-toggler */
+        .chatbot-toggler {
+            position: fixed;
+            right: 40px;
+            bottom: 35px;
+            height: 50px;
+            width: 50px;
+            color: #fff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            cursor: pointer;
+            background: #724ae8;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .show-chatbot .chatbot-toggler {
+            transform: rotate(90deg);
+        }
+
+        .chatbot-toggler span {
+            position: absolute;
+        }
+
+        .show-chatbot .chatbot-toggler span:first-child,
+        .chatbot-toggler span:last-child {
+            opacity: 0;
+        }
+
+        .show-chatbot .chatbot-toggler span:last-child {
+            opacity: 1;
+        }
+
+        /* The following styles are for the chatbot container */
+        .chatbot {
+            font-family: 'Open Sans', sans-serif;
+            position: fixed;
+            right: 40px;
+            bottom: 100px;
+            width: 420px;
+            transform: scale(0.5);
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
+            background: #fff;
+            border-radius: 15px;
+            transform-origin: bottom right;
+            box-shadow: 0 0 128px 0 rgba(0, 0, 0, 0.1),
+                        0 32px 64px -48px rgba(0, 0, 0, 0.5);
+            transition: all 0.1s ease;
+        }
+
+        .show-chatbot .chatbot {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .chatbot header {
+            background: #724ae8;
+            padding: 16px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .chatbot header h2 {
+            color: #fff;
+            font-size: 1.4rem;
+        }
+
+        .chatbot header span {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            color: #fff;
+            cursor: pointer;
+            display: none;
+            transform: translateY(-50%);
+        }
+
+        /* The following styles are for the chatbox */
+        .chatbox {
+            height: 510px;
+            overflow-y: auto;
+            padding: 30px 20px 100px;
+        }
+
+        .chatbox .chat {
+            display: flex;
+        }
+
+        .chat.quick-reply {
+            justify-content: center; /* Center the quick reply buttons */
+        }
+
+        .rating-message {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column; /* Display its children in a column layout */
+            align-items: center; /* Center-align the content horizontally */
+            margin-bottom: 10px; /* Add some space below the entire rating container */
+            text-align: center;
+        }
+
+        .rating-message .material-symbols-outlined {
+            display: none; /* Hide elements with this class within the rating message */
+        }
+
+/* Styles for the rating message */
+       
+        /* Styles for individual emoji buttons */
+        .emoji-buttons {
+            display: flex;
+            justify-content: center; /* Horizontally center the emoji buttons */
+        }
+
+        .option-buttons {
+            display: block;
+            justify-content: center;
+        }
+
+        /* Style for each quick reply button */
+        .quick-reply-button, .emoji-button {
+            background-color: #e3e2fd;
+            color: #724ae8;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Hover effect for quick reply buttons */
+        .quick-reply-button:hover {
+            background-color: #B9A9ED;
+        }
+
+      
+        /* Styles for incoming and outgoing messages */
+        .chatbox .incoming span {
+            height: 32px;
+            width: 32px;
+            background: #724ae8;
+            color: #fff;
+            align-self: flex-end;
+            text-align: center;
+            line-height: 32px;
+            border-radius: 4px;
+            margin: 0 10px 7px 0;
+        }
+
+        .chatbox .outgoing {
+            justify-content: flex-end;
+            margin: 20px 0;
+        }
+
+        .chatbox .chat p {
+            color: #fff;
+            max-width: 75%;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            padding: 12px 16px;
+            border-radius: 10px 10px 0px 10px;
+            background: #724ae8;
+        }
+
+        .chatbox .chat p.error {
+            color: #721c24;
+            background: #f8d7da;
+        }
+
+        .chatbox .incoming p {
+            color: black;
+            background: #f2f2f2;
+            border-radius: 10px 10px 10px 0px;
+        }
+
+        /* Styles for the chat input */
+        .chatbot .chat-input {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            gap: 5px;
+            background: #fff;
+            padding: 5px 20px;
+            border-top: 1px solid #ccc;
+        }
+
+        .chat-input textarea {
+            height: 55px;
+            width: 100%;
+            border: none;
+            outline: none;
+            max-height: 180px;
+            font-size: 0.95rem;
+            resize: none;
+            padding: 16px 15px 16px 0;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .chat-input span {
+            align-self: flex-end;
+            height: 55px;
+            line-height: 55px;
+            color: #724ae8;
+            font-size: 1.35rem;
+            cursor: pointer;
+            visibility: hidden;
+        }
+
+        .chat-input textarea:valid ~ span {
+            visibility: visible;
+        }
+
+        .logo {
+            text-align: center; 
+            margin-top: 2px; 
+            font-size: 10px;
+            color: #fff;
+            opacity: 80%;
+        }
+
+
+        @media (max-width: 490px) {
+            .chatbot {
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+
+            .chatbot .chatbox {
+                height: 90%;
+            }
+
+            .chatbot header span {
+                display: block;
+            }
+
+            /* Add this CSS code to style the emoji buttons */
+
+
+        }
+    </style>
+</head>
+<!-- Removed the <body> tag and its contents -->
+<button class="chatbot-toggler">
+            <span class="material-symbols-outlined">
+                mode_comment
+            </span>
+            <span class="material-symbols-outlined">
+                close
+            </span>
+        </button>
+        <div class="chatbot">
+            <header>
+                <h2>Chatbot</h2>
+                <span class="close-btn material-symbols-outlined">
+                    close
+                </span>
+                <div class="logo">
+                    Powered by ShiBot
+                </div>
+                </header>
+                <ul class="chatbox">
+                    <li class="chat incoming">
+                        <span class="material-symbols-outlined">
+                            smart_toy
+                        </span>
+                        <p>Привіт! Як можу допомогти ?</p>
+                    </li>
+                    <li class="chat quick-reply">
+                        <button class="quick-reply-button">Замовити</button>
+                    </li>
+                </ul>
+                <div class="chat-input">
+                    <textarea placeholder="Введіть повідомлення..." required></textarea>
+                    <span class="material-symbols-outlined" id="send-button">send</span>
+                </div>
+                
+        </div>
+<script>
+const sendChatBtn = document.querySelector(".chat-input span");
+const chatInput = document.querySelector(".chat-input textarea");
+const chatbox = document.querySelector(".chatbox");
+const chatbotToggler = document.querySelector(".chatbot-toggler");
+const chatbotCloseBtn = document.querySelector(".close-btn");
+const makeOrderButton = document.querySelector(".quick-reply-button");
+
+let userMessage;
+const inputInitHeight = chatInput.scrollHeight;
+
+const createChatLi = (message, className) => {
+    // create a chat <li> element with passed message and className
+    const chatLi = document.createElement("li");
+    chatLi.classList.add("chat", className);
+    let chatContent = className === "outgoing" ? `<p></p>` : `<span class="material-symbols-outlined">smart_toy</span><p></p>`;
+    chatLi.innerHTML = chatContent;
+    chatLi.querySelector("p").textContent = message;
+    return chatLi;
+}
+
+
+const usedSourceUUIDs = new Set();
+
+const generateRandomSourceUUID = () => {
+    while (true) {
+        const randomUUID = Math.floor(Math.random() * 90000) + 10000; // Generate a random 5-digit number
+        if (!usedSourceUUIDs.has(randomUUID)) {
+            usedSourceUUIDs.add(randomUUID);
+            return randomUUID.toString();
+        }
+    }
+};
+
+const orderPayload = {
+    make_order: {
+        "source_id": 1,
+        "source_uuid": generateRandomSourceUUID(),
+        "buyer_comment": "I want this sentence to be my `buyer` comment on KeyCRM",
+        "manager_id": 1,
+        "manager_comment": "Handle till weekend",
+        "promocode": "MERRYCHRISTMAS",
+        "discount_percent": 11.5,
+        "discount_amount": 9.99,
+        "shipping_price": 2.5,
+        "wrap_price": 3.5,
+        "taxes": 2.5,
+        "ordered_at": "",
+        "buyer": {
+            "full_name": "Alice",
+            "email": "john.doe@mail.app",
+            "phone": "+1 555-234-1234"
+        },
+        "products": [
+            {
+            "sku": "",
+            "price": 100,
+            "discount_percent": 11.5,
+            "discount_amount": 9.99,
+            "quantity": 1,
+            "unit_type": "кг",
+            "name": "",
+            "comment": "Наклеїти плівку",
+            }
+        ],
+        "payments": [
+            {
+            "payment_method_id": 1,
+            "payment_method": "",
+            "amount": 123.5,
+            "description": "",
+            "payment_date": "2021-02-21 14:44:00",
+            "status": "not_paid"
+            }
+        ],
+        "custom_fields": [
+            {
+            "uuid": "OR_1037",
+            "value": "Лорд"
+            }
+        ]
+    }
+};
+
+
+// Declare the orderSent flag at an appropriate scope, possibly at the beginning of your script
+let orderSent = false;
+
+const makeTheOrder = (orderPayload) => {
+    // Send the make_order request to your API
+    const sourceUUID = generateRandomSourceUUID(); // Generate a random source_uuid
+    orderPayload.make_order.source_uuid = sourceUUID;
+
+    // Get the current date and time in the desired format (e.g., "yyyy-MM-dd HH:mm:ss")
+    const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    orderPayload.make_order.ordered_at = currentDateTime; // Update "ordered_at" to the current time
+
+    fetch('/api', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderPayload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle the response from your API
+        console.log(data);
+
+        // Set the orderSent flag to true when the order is successfully sent
+        orderSent = true;
+    })
+    .catch(error => {
+        console.error('Error making the order:', error);
+    });
+};
+
+
+// Define an array of questions and corresponding orderPayload keys
+
+// ...
+// Define a function to create option buttons
+function createOptionButtons(options) {
+    const buttonContainer = document.createElement("div");
+    buttonContainer.classList.add("option-buttons");
+
+    options.forEach((option) => {
+        const optionButton = document.createElement("button");
+        optionButton.classList.add("emoji-button");
+        optionButton.setAttribute("data-value", option.label); // Store the option label as data-value
+
+        optionButton.innerText = option.label;
+        buttonContainer.appendChild(optionButton);
+    });
+
+    return buttonContainer;
+}
+
+
+// Function to handle product-related questions
+// Define productQuestion as a global variable
+// Define an array of product-related questions and keys
+const productProperties = ["sku", "quantity"];
+const productQuestions = [];
+
+for (let i = 0; i < productProperties.length; i++) {
+    productQuestions.push({
+        question: `Будь ласка напишіть ${productProperties[i]} товару:`,
+        key: `make_order.products[0].${productProperties[i]}`
+    });
+}
+
+const questions = [
+    {
+        question: "Оберіть метод оплати",
+        key: "make_order.payments[0].payment_method_id",
+        options: [
+            { id: 1, label: "Готівка" },
+            { id: 2, label: "Банківська карта" },
+            { id: 3, label: "Переказ на картку" },
+            { id: 4, label: "PayPal" },
+            { id: 5, label: "Інший" }
+        ]
+    },
+    {
+        question: "Яке ваше повне ім'я?",
+        key: "make_order.buyer.full_name"
+    },
+    {
+        question: "Ваша електронна адреса?",
+        key: "make_order.buyer.email"
+    },
+    {
+        question: "Номер телефону?",
+        key: "make_order.buyer.phone"
+    },
+    // Add more non-product-related questions as needed
+];
+
+// Concatenate the productQuestions array to the questions array
+const allQuestions = questions.concat(productQuestions);
+// Function to handle product-related questions
+// Function to handle product-related questions
+const handleProductQuestions = (productIndex, propertyIndex) => {
+    if (productIndex < orderPayload.make_order.products.length) {
+        const currentProduct = orderPayload.make_order.products[productIndex];
+        if (propertyIndex < productProperties.length) {
+            const currentQuestion = productQuestions[propertyIndex];
+
+            if (!currentProduct[currentQuestion.key.split('.').pop()]) {
+                // Ask the question only if it hasn't been answered for the current product
+                chatbox.appendChild(createChatLi(currentQuestion.question, "incoming"));
+                chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                chatInput.addEventListener("keydown", function handleKeydown(e) {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+
+                        const userResponse = chatInput.value.trim();
+
+                        if (userResponse) {
+                            chatbox.appendChild(createChatLi(userResponse, "outgoing"));
+                            chatbox.scrollTo(0, chatbox.scrollHeight);
+
+
+                            currentProduct[currentQuestion.key.split('.').pop()] = userResponse;
+                        }
+                        // Move to the next property
+                        handleProductQuestions(productIndex, propertyIndex + 1);
+                    }
+                });
+            } else {
+                // The question has already been answered, move to the next property
+                handleProductQuestions(productIndex, propertyIndex + 1);
+            }
+        } else {
+            // All properties for the current product have been asked
+            handleProductQuestions(productIndex + 1, 0); // Move to the next product
+        }
+    } else {
+        // All products have been processed
+        currentQuestionIndex++;
+        chatInput.value = "";
+        askingQuestions = false;
+        handleNextQuestion();
+    }
+};
+// ...
+function updatePaymentMethod(optionId) {
+    const paymentIndex = 0; // Assuming you always want to update the first payment
+    orderPayload.make_order.payments[paymentIndex].payment_method_id = optionId;
+}
+let orderMade = false;
+let currentQuestionIndex = 0;
+let askingQuestions = false; // Add this flag
+let ratingAsked = false;
+const handleNextQuestion = () => {
+    if (currentQuestionIndex < allQuestions.length) {
+        askingQuestions = true;
+        const currentQuestion = allQuestions[currentQuestionIndex];
+
+        if (currentQuestion.key.startsWith("make_order.products")) {
+            // Use the productQuestions array for product-related questions
+            const productQuestion = productQuestions.find(
+                (q) => q.key === currentQuestion.key
+            );
+
+            if (productQuestion) {
+                handleProductQuestions(0, productProperties.indexOf(productQuestion.key.split('.').pop()));
+                return;
+            }
+        }
+
+        if (currentQuestion.options) {
+    // Handle questions with options (like payment method)
+    // Display options as buttons
+    chatbox.appendChild(createOptionButtons(currentQuestion.options));
+    chatbox.scrollTo(0, chatbox.scrollHeight);
+
+    const optionButtons = document.querySelectorAll(".emoji-button");
+    optionButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const userResponse = button.getAttribute("data-value");
+            const optionId = currentQuestion.options.find((option) => option.label === userResponse)?.id;
+
+            if (optionId !== undefined) {
+                // Update the payment method ID
+                updatePaymentMethod(optionId);
+            }
+
+            // Display the user's response as an outgoing message
+            chatbox.appendChild(createChatLi(userResponse, "outgoing"));
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+
+            // Update the orderPayload
+            const keys = currentQuestion.key.split('.');
+            let tempObject = orderPayload;
+
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!tempObject[keys[i]]) {
+                    tempObject[keys[i]] = {};
+                }
+                tempObject = tempObject[keys[i]];
+            }
+
+            tempObject[keys[keys.length - 1]] = userResponse;
+
+            currentQuestionIndex++;
+            askingQuestions = false;
+
+            // Ask the next question
+            handleNextQuestion();
+        });
+    });
+        } else {
+            // Handle text input questions
+            chatbox.appendChild(createChatLi(currentQuestion.question, "incoming"));
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+
+            chatInput.addEventListener("keydown", function handleKeydown(e) {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+
+                    const userResponse = chatInput.value.trim();
+
+                    if (userResponse) {
+                        // Display the user's response as an outgoing message
+                        chatbox.appendChild(createChatLi(userResponse, "outgoing"));
+                        chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                        // Split the key and update the orderPayload
+                        const keys = currentQuestion.key.split('.');
+                        let tempObject = orderPayload;
+
+                        for (let i = 0; i < keys.length - 1; i++) {
+                            if (!tempObject[keys[i]]) {
+                                tempObject[keys[i]] = {};
+                            }
+                            tempObject = tempObject[keys[i]];
+                        }
+
+                        tempObject[keys[keys.length - 1]] = userResponse;
+
+                        currentQuestionIndex++;
+                        chatInput.value = "";
+                        chatInput.removeEventListener("keydown", handleKeydown);
+                        askingQuestions = false;
+
+                        // Ask the next question
+                        handleNextQuestion();
+                    }
+                }
+            });
+        }
+    } else {
+        // All questions have been asked, proceed to make the order
+        if (!orderMade) { // Check if the order hasn't been made yet
+            makeTheOrder(orderPayload);
+            orderMade = true; // Set the orderMade flag to true to indicate that the order has been made
+        }
+
+        // Display a message indicating that the order has been sent
+        if (!orderSent) { // Add a condition to check if the order has been sent
+            const orderSentMessage = "Ваше замовлення було відправлено!";
+            chatbox.appendChild(createChatLi(orderSentMessage, "incoming"));
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+            orderSent = true; // Set the orderSent flag to true
+        }
+
+        if (!ratingAsked) {
+            setTimeout(() => {
+                const ratingContainer = document.createElement("div");
+                ratingContainer.classList.add("rating-container"); // Add the "rating-container" class
+
+                const ratingMessage = createChatLi(
+                    "Як би ви оцінили взіємодію ? Оберіть емодзі:",
+                    "incoming"
+                );
+
+                // Add the "rating-message" class to the rating message element
+                ratingMessage.classList.add("rating-message");
+
+                const emojis = ["😃", "😐", "😞"];
+                const emojiButtons = document.createElement("div");
+                emojiButtons.classList.add("emoji-buttons");
+
+                emojis.forEach((emoji) => {
+                    const emojiButton = document.createElement("button");
+                    emojiButton.classList.add("emoji-button");
+                    emojiButton.innerText = emoji;
+
+                    emojiButton.addEventListener("click", () => {
+                        // Handle the user's rating here, e.g., send it to your server
+                        const selectedEmoji = emoji; // This is the selected emoji
+                        // You can send the rating to your server or perform any other action
+
+                        // Add a message indicating the selected rating
+                        const ratingResponse = createChatLi(
+                            `Ви оцінили розмову як: ${selectedEmoji}`,
+                            "incoming"
+                        );
+
+                        chatbox.appendChild(ratingResponse);
+                        chatbox.scrollTo(0, chatbox.scrollHeight);
+                    });
+
+                    emojiButtons.appendChild(emojiButton);
+                });
+
+                ratingMessage.appendChild(emojiButtons);
+                ratingContainer.appendChild(ratingMessage); // Add the rating message to the rating container
+                chatbox.appendChild(ratingContainer); // Add the rating container to the chatbox
+                chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                // Set the ratingAsked flag to true to prevent asking again
+                ratingAsked = true;
+            }, 3000); // Wait for 3 seconds (3000 milliseconds) before executing
+        }
+    }
+};
+
+
+// const handleNextQuestion = () => {
+//      if (currentQuestionIndex < questions.length) {
+        
+//         askingQuestions = true; // Set to true while asking a question
+//         const currentQuestion = questions[currentQuestionIndex];
+        
+//         // Display the question as an incoming message
+//         chatbox.appendChild(createChatLi(currentQuestion.question, "incoming"));
+//         chatbox.scrollTo(0, chatbox.scrollHeight);
+        
+//         chatInput.addEventListener("keydown", function handleKeydown(e) {
+//             if (e.key === "Enter" && !e.shiftKey) {
+//                 e.preventDefault();
+
+//                 const userResponse = chatInput.value.trim();
+
+//                 if (userResponse) {
+//                     // Display the user's response as an outgoing message
+//                     chatbox.appendChild(createChatLi(userResponse, "outgoing"));
+//                     chatbox.scrollTo(0, chatbox.scrollHeight);
+
+//                     // Split the key and update the orderPayload
+//                     const keys = currentQuestion.key.split('.');
+//                     let tempObject = orderPayload;
+
+//                     for (let i = 0; i < keys.length - 1; i++) {
+//                         if (!tempObject[keys[i]]) {
+//                             tempObject[keys[i]] = {}; // Initialize nested object if it doesn't exist
+//                         }
+//                         tempObject = tempObject[keys[i]];
+//                     }
+
+//                     tempObject[keys[keys.length - 1]] = userResponse;
+
+//                     currentQuestionIndex++;
+
+//                     // Clear the input and move to the next question
+//                     chatInput.value = "";
+//                     chatInput.removeEventListener("keydown", handleKeydown);
+//                     askingQuestions = false; // Set to false after the question is answered
+                    
+//                     // Ask the next question
+//                     handleNextQuestion();
+
+//                 }
+//             }
+//         }
+//         );
+//     } else {
+//         // All questions have been asked, proceed to make the order
+//         makeTheOrder(orderPayload);
+//         // Display a message indicating that the order has been sent
+//         const orderSentMessage = "Ваше замовлення було відправлено!";
+//         chatbox.appendChild(createChatLi(orderSentMessage, "incoming"));
+//         chatbox.scrollTo(0, chatbox.scrollHeight);
+
+//         if (!ratingAsked) {
+//                 setTimeout(() => {
+//                     const ratingContainer = document.createElement("div");
+//                     ratingContainer.classList.add("rating-container"); // Add the "rating-container" class
+
+//                     const ratingMessage = createChatLi(
+//                         "Як би ви оцінили взіємодію ? Оберіть емодзі:",
+//                         "incoming"
+//                     );
+
+//                     // Add the "rating-message" class to the rating message element
+//                     ratingMessage.classList.add("rating-message");
+
+//                     const emojis = ["😃", "😐", "😞"];
+//                     const emojiButtons = document.createElement("div");
+//                     emojiButtons.classList.add("emoji-buttons");
+
+//                     emojis.forEach((emoji) => {
+//                         const emojiButton = document.createElement("button");
+//                         emojiButton.classList.add("emoji-button");
+//                         emojiButton.innerText = emoji;
+
+//                         emojiButton.addEventListener("click", () => {
+//                             // Handle the user's rating here, e.g., send it to your server
+//                             const selectedEmoji = emoji; // This is the selected emoji
+//                             // You can send the rating to your server or perform any other action
+
+//                             // Add a message indicating the selected rating
+//                             const ratingResponse = createChatLi(
+//                                 `Ви оцінили розмову як: ${selectedEmoji}`,
+//                                 "incoming"
+//                             );
+
+//                             chatbox.appendChild(ratingResponse);
+//                             chatbox.scrollTo(0, chatbox.scrollHeight);
+//                         });
+
+//                         emojiButtons.appendChild(emojiButton);
+//                     });
+
+//                     ratingMessage.appendChild(emojiButtons);
+//                     ratingContainer.appendChild(ratingMessage); // Add the rating message to the rating container
+//                     chatbox.appendChild(ratingContainer); // Add the rating container to the chatbox
+//                     chatbox.scrollTo(0, chatbox.scrollHeight);
+
+//                     // Set the ratingAsked flag to true to prevent asking again
+//                     ratingAsked = true;
+//                 }, 3000); // Wait for 3 seconds (3000 milliseconds) before executing
+//             }
+//     }
+// };
+
+
+const handleChat = () => {
+    question = chatInput.value.trim();
+    if (!question) return;
+
+    if (askingQuestions) {
+        // If askingQuestions is true, don't execute handleChat
+        return;
+    }
+
+    chatInput.value = "";
+    chatInput.style.height = `${inputInitHeight}px`;
+
+    // Append user's message to the chatbox
+    chatbox.appendChild(createChatLi(question, "outgoing"));
+    chatbox.scrollTo(0, chatbox.scrollHeight);
+
+    const incomingChatLi = createChatLi("Thinking...", "incoming");
+    const messageElement = incomingChatLi.querySelector("p");
+
+    setTimeout(() => {
+        // Display thinking message while waiting for response
+        chatbox.appendChild(incomingChatLi);
+        chatbox.scrollTo(0, chatbox.scrollHeight);
+        fetch('/api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ question: question })
+        })
+        .then(response => response.json())
+        .then(data => {
+            messageElement.textContent = data; // Print the received data
+        }).catch((error) => {
+            messageElement.classList.add("error");
+            messageElement.textContent = "Щось пішло не так. Спробуйте пізніше";
+        }).finally(() => {
+            // Check if the rating has not been asked yet
+            if (!ratingAsked) {
+                setTimeout(() => {
+                    const ratingContainer = document.createElement("div");
+                    ratingContainer.classList.add("rating-container"); // Add the "rating-container" class
+
+                    const ratingMessage = createChatLi(
+                        "Як би ви оцінили взіємодію ? Оберіть емодзі:",
+                        "incoming"
+                    );
+
+                    // Add the "rating-message" class to the rating message element
+                    ratingMessage.classList.add("rating-message");
+
+                    const emojis = ["😃", "😐", "😞"];
+                    const emojiButtons = document.createElement("div");
+                    emojiButtons.classList.add("emoji-buttons");
+
+                    emojis.forEach((emoji) => {
+                        const emojiButton = document.createElement("button");
+                        emojiButton.classList.add("emoji-button");
+                        emojiButton.innerText = emoji;
+
+                        emojiButton.addEventListener("click", () => {
+                            // Handle the user's rating here, e.g., send it to your server
+                            const selectedEmoji = emoji; // This is the selected emoji
+                            // You can send the rating to your server or perform any other action
+
+                            // Add a message indicating the selected rating
+                            const ratingResponse = createChatLi(
+                                `Ви оцінили розмову як: ${selectedEmoji}`,
+                                "incoming"
+                            );
+
+                            chatbox.appendChild(ratingResponse);
+                            chatbox.scrollTo(0, chatbox.scrollHeight);
+                        });
+
+                        emojiButtons.appendChild(emojiButton);
+                    });
+
+                    ratingMessage.appendChild(emojiButtons);
+                    ratingContainer.appendChild(ratingMessage); // Add the rating message to the rating container
+                    chatbox.appendChild(ratingContainer); // Add the rating container to the chatbox
+                    chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                    // Set the ratingAsked flag to true to prevent asking again
+                    ratingAsked = true;
+                }, 3000); // Wait for 3 seconds (3000 milliseconds) before executing
+            }
+
+        });
+    }, 600);
+}
+
+
+
+chatInput.addEventListener("input", () => {
+//adjust the height of textarea based on its content 
+    chatInput.style.height = `${inputInitHeight}px`;
+    chatInput.style.height = `${chatInput.scrollHeight}px`;
+});
+
+chatInput.addEventListener("keydown", (e) => {
+// if enter key is pressed without a Shift key and the window
+// width is greater than 800px, handle the chat
+    if(e.key === "Enter" && !e.shiftKey && window.innerWidth > 800) {
+        e.preventDefault();
+        handleChat();
+    }
+});
+// ...
+
+sendChatBtn.addEventListener("click", () => {
+    // Call both handleChat and handleNextQuestion
+    handleChat();
+    handleNextQuestion();
+});
+
+makeOrderButton.addEventListener("click", () => {
+    // Reset the question index to start from the beginning
+    currentQuestionIndex = 0;
+    
+    // Start asking the questions
+    askingQuestions = true; // Set askingQuestions to true while asking questions
+    handleNextQuestion();   
+});
+chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+chatbotCloseBtn.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
+
+</script>
+
+</body>
+</html>
